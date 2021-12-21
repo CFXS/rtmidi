@@ -26,7 +26,10 @@ if(WIN32)
 endif()
 
 # Standard CMake options
-option(BUILD_SHARED_LIBS "Build as shared library" ON)
+option(BUILD_SHARED_LIBS "Build as shared library" OFF)
+option(BUILD_STATIC_LIBS "Build as static library" ON)
+option(RTMIDI_BUILD_SHARED_LIBS "Build as shared library" OFF)
+option(RTMIDI_BUILD_STATIC_LIBS "Build as static library" ON)
 
 if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel")
@@ -201,29 +204,6 @@ target_link_libraries(rtmidi PUBLIC ${PUBLICLINKLIBS}
 
 # Set standard installation directories.
 include(GNUInstallDirs)
-
-# Add tests if requested.
-option(RTMIDI_BUILD_TESTING "Build test programs" ON)
-if (NOT DEFINED RTMIDI_BUILD_TESTING OR RTMIDI_BUILD_TESTING STREQUAL "")
-  set(RTMIDI_BUILD_TESTING ${BUILD_TESTING})
-endif()
-if (RTMIDI_BUILD_TESTING)
-  include(CTest)
-  add_executable(cmidiin    tests/cmidiin.cpp)
-  add_executable(midiclock  tests/midiclock.cpp)
-  add_executable(midiout    tests/midiout.cpp)
-  add_executable(midiprobe  tests/midiprobe.cpp)
-  add_executable(qmidiin    tests/qmidiin.cpp)
-  add_executable(sysextest  tests/sysextest.cpp)
-  add_executable(apinames   tests/apinames.cpp)
-  add_executable(testcapi   tests/testcapi.c)
-  list(GET LIB_TARGETS 0 LIBRTMIDI)
-  set_target_properties(cmidiin midiclock midiout midiprobe qmidiin sysextest apinames testcapi
-    PROPERTIES RUNTIME_OUTPUT_DIRECTORY tests
-               INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}
-               LINK_LIBRARIES ${LIBRTMIDI})
-  add_test(NAME apinames COMMAND apinames)
-endif()
 
 # Set standard installation directories.
 include(GNUInstallDirs)
