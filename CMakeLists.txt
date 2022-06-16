@@ -90,6 +90,7 @@ set(PKGCONFIG_REQUIRES)
 set(LIBS_REQUIRES)
 set(API_DEFS)
 set(API_LIST)
+set(PACKAGE_DEPENDENCIES)
 
 # Tweak API-specific configuration.
 
@@ -128,10 +129,11 @@ if(RTMIDI_API_ALSA)
     message(FATAL_ERROR "ALSA API requested but no ALSA dev libraries found")
   endif()
   list(APPEND INCDIRS ${ALSA_INCLUDE_DIR})
-  list(APPEND LINKLIBS ${ALSA_LIBRARY})
+  list(APPEND LINKLIBS ALSA::ALSA)
   list(APPEND PKGCONFIG_REQUIRES "alsa")
   list(APPEND API_DEFS "-D__LINUX_ALSA__")
   list(APPEND API_LIST "alsa")
+  list(APPEND PACKAGE_DEPENDENCIES "find_dependency(ALSA)")
 endif()
 
 # WinMM
@@ -160,6 +162,7 @@ if (NEED_PTHREAD)
     CMAKE_THREAD_PREFER_PTHREAD
     THREADS_PREFER_PTHREAD_FLAG)
   list(APPEND PUBLICLINKLIBS Threads::Threads)
+  list(APPEND PACKAGE_DEPENDENCIES "find_dependency(Threads)")
 endif()
 
 # Create library targets.
@@ -190,6 +193,9 @@ set_target_properties(rtmidi PROPERTIES
   SOVERSION ${SO_VER}
   VERSION ${FULL_VER})
 
+# Set standard installation directories.
+include(GNUInstallDirs)
+
 # Set include paths, populate target interface.
 target_include_directories(rtmidi PRIVATE ${INCDIRS}
                                   PUBLIC
@@ -203,8 +209,28 @@ target_compile_definitions(rtmidi PRIVATE "RTMIDI_DO_NOT_ENSURE_UNIQUE_PORTNAMES
 target_link_libraries(rtmidi PUBLIC ${PUBLICLINKLIBS} 
                              PRIVATE ${LINKLIBS})
 
-# Set standard installation directories.
-include(GNUInstallDirs)
+# Add tests if requested.
+option(RTMIDI_BUILD_TESTING "Build test programs" ON)
+if (NOT DEFINED RTMIDI_BUILD_TESTING OR RTMIDI_BUILD_TESTING STREQUAL "")
+  set(RTMIDI_BUILD_TESTING ${BUILD_TESTING})
+endif()
+if (RTMIDI_BUILD_TESTING)
+  include(CTest)
+  add_executable(cmidiin    tests/cmidiin.cpp)
+  add_executable(midiclock  tests/midiclock.cpp)
+  add_executable(midiout    tests/midiout.cpp)
+  add_executable(midiprobe  tests/midiprobe.cpp)
+  add_executable(qmidiin    tests/qmidiin.cpp)
+  add_executable(sysextest  tests/sysextest.cpp)
+  add_executable(apinames   tests/apinames.cpp)
+  add_executable(testcapi   tests/testcapi.c)
+  list(GET LIB_TARGETS 0 LIBRTMIDI)
+  set_target_properties(cmidiin midiclock midiout midiprobe qmidiin sysextest apinames testcapi
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY tests
+               INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}
+               LINK_LIBRARIES ${LIBRTMIDI})
+  add_test(NAME apinames COMMAND apinames)
+endif()
 
 # Set standard installation directories.
 include(GNUInstallDirs)
@@ -261,23 +287,25 @@ include(CMakePackageConfigHelpers)
 
 # Write cmake package version file
 write_basic_package_version_file(
-    RtMidi-config-version.cmake
+    rtmidi-config-version.cmake
     VERSION ${FULL_VER}
     COMPATIBILITY SameMajorVersion
 )
 
+string(REPLACE ";" "\n" package_dependencies "${PACKAGE_DEPENDENCIES}")
+
 # Write cmake package config file
 configure_package_config_file (
-    cmake/RtMidi-config.cmake.in
-    RtMidi-config.cmake
+    cmake/rtmidi-config.cmake.in
+    rtmidi-config.cmake
     INSTALL_DESTINATION "${RTMIDI_CMAKE_DESTINATION}"
 )
 
 # Install package files
 install (
     FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/RtMidi-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/RtMidi-config-version.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/rtmidi-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/rtmidi-config-version.cmake"
     DESTINATION
         "${RTMIDI_CMAKE_DESTINATION}"
 )
