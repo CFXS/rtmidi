@@ -82,7 +82,7 @@ file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" CONFIGAC
 string(REGEX REPLACE ${R} "\\1" PACKAGE_VERSION ${CONFIGAC})
 
 # Init variables
-set(rtmidi_SOURCES src/RtMidi.cpp src/rtmidi_c.cpp)
+set(rtmidi_SOURCES src/RtMidi.cpp include/RtMidi/RtMidi.h src/rtmidi_c.cpp include/RtMidi/rtmidi_c.h)
 set(LINKLIBS)
 set(PUBLICLINKLIBS)
 set(INCDIRS include)
@@ -197,8 +197,10 @@ set_target_properties(rtmidi PROPERTIES
 include(GNUInstallDirs)
 
 # Set include paths, populate target interface.
-target_include_directories(rtmidi PRIVATE include/RtMidi
-                                  PUBLIC include)
+target_include_directories(rtmidi PUBLIC ${INCDIRS} 
+                                  PUBLIC
+                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                                    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # Set compile-time definitions
 target_compile_definitions(rtmidi PRIVATE ${API_DEFS})
@@ -244,13 +246,6 @@ string(REPLACE ";" " " api "${API_DEFS}")
 set(prefix ${CMAKE_INSTALL_PREFIX})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/rtmidi.pc.in" "rtmidi.pc" @ONLY)
 
-# Add install rule.
-install(TARGETS ${LIB_TARGETS}
-        EXPORT RtMidiTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/rtmidi)
 
 # Store the package in the user registry.
 export(PACKAGE RtMidi)
@@ -258,14 +253,7 @@ export(PACKAGE RtMidi)
 # Set installation path for CMake files.
 set(RTMIDI_CMAKE_DESTINATION share/rtmidi)
 
-# Export library target (build-tree).
-export(EXPORT RtMidiTargets
-       NAMESPACE RtMidi::)
 
-# Export library target (install-tree).
-install(EXPORT RtMidiTargets
-        DESTINATION ${RTMIDI_CMAKE_DESTINATION}
-        NAMESPACE RtMidi::)
 
 # Configure uninstall target.
 configure_file(
@@ -276,13 +264,10 @@ configure_file(
 add_custom_target(${RTMIDI_TARGETNAME_UNINSTALL}
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/RtMidiConfigUninstall.cmake)
 
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/rtmidi.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 # Set up CMake package
 include(CMakePackageConfigHelpers)
-
+ 
 # Write cmake package version file
 write_basic_package_version_file(
     rtmidi-config-version.cmake
@@ -297,13 +282,4 @@ configure_package_config_file (
     cmake/rtmidi-config.cmake.in
     rtmidi-config.cmake
     INSTALL_DESTINATION "${RTMIDI_CMAKE_DESTINATION}"
-)
-
-# Install package files
-install (
-    FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/rtmidi-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/rtmidi-config-version.cmake"
-    DESTINATION
-        "${RTMIDI_CMAKE_DESTINATION}"
 )

@@ -37,7 +37,7 @@
 */
 /**********************************************************************/
 
-#include "RtMidi.h"
+#include "RtMidi/RtMidi.h"
 #include <sstream>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
