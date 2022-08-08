@@ -82,10 +82,10 @@ file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" CONFIGAC
 string(REGEX REPLACE ${R} "\\1" PACKAGE_VERSION ${CONFIGAC})
 
 # Init variables
-set(rtmidi_SOURCES RtMidi.cpp RtMidi.h rtmidi_c.cpp rtmidi_c.h)
+set(rtmidi_SOURCES src/RtMidi.cpp src/rtmidi_c.cpp)
 set(LINKLIBS)
 set(PUBLICLINKLIBS)
-set(INCDIRS)
+set(INCDIRS include)
 set(PKGCONFIG_REQUIRES)
 set(LIBS_REQUIRES)
 set(API_DEFS)
@@ -197,10 +197,8 @@ set_target_properties(rtmidi PROPERTIES
 include(GNUInstallDirs)
 
 # Set include paths, populate target interface.
-target_include_directories(rtmidi PRIVATE ${INCDIRS}
-                                  PUBLIC
-                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                                    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(rtmidi PRIVATE include/RtMidi
+                                  PUBLIC include)
 
 # Set compile-time definitions
 target_compile_definitions(rtmidi PRIVATE ${API_DEFS})
